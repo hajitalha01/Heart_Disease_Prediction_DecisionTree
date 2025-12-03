@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
+import pickle
 
 # Load trained model
-model = joblib.load('heart_disease_decision_tree.pkl')
+with open('HeartDisease_Model.pkl', 'rb') as f:
+    model = pickle.load(f)
 
-# App title
 st.title("Heart Disease Prediction App")
 st.write("Predict whether a patient has heart disease using Decision Tree model.")
 
@@ -39,16 +39,15 @@ def user_input_features():
         'ExerciseAngina': ExerciseAngina,
         'ST_Slope': ST_Slope
     }
-    features = pd.DataFrame([data])
-    return features
+    return pd.DataFrame([data])
 
 input_df = user_input_features()
 
-# One-hot encode user input to match training
+# One-hot encode to match training
 categorical_cols = ['Sex', 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']
 input_encoded = pd.get_dummies(input_df, columns=categorical_cols, drop_first=True)
 
-# Align input columns with model training columns
+# Align input with model features
 model_features = model.feature_names_in_
 input_encoded = input_encoded.reindex(columns=model_features, fill_value=0)
 
@@ -57,9 +56,20 @@ prediction = model.predict(input_encoded)
 prediction_proba = model.predict_proba(input_encoded)
 
 st.subheader("Prediction")
-heart_status = 'Heart Disease' if prediction[0]==1 else 'No Heart Disease'
+heart_status = 'Heart Disease' if prediction[0] == 1 else 'No Heart Disease'
 st.write(heart_status)
 
 st.subheader("Prediction Probability")
 st.write(f"No Heart Disease: {prediction_proba[0][0]:.2f}")
 st.write(f"Heart Disease: {prediction_proba[0][1]:.2f}")
+
+# Download button for .pkl file
+with open('heart_disease_decision_tree.pkl', 'rb') as f:
+    model_bytes = f.read()
+
+st.download_button(
+    label="Download Trained Model",
+    data=model_bytes,
+    file_name="HeartDisease_Model.pkl",
+    mime="application/octet-stream"
+)
