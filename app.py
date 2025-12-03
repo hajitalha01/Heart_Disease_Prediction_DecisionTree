@@ -36,4 +36,32 @@ def user_input_features():
         'Oldpeak': Oldpeak,
         'Sex': Sex,
         'ChestPainType': ChestPainType,
-        'RestingE
+        'RestingECG': RestingECG,
+        'ExerciseAngina': ExerciseAngina,
+        'ST_Slope': ST_Slope
+    }
+    return pd.DataFrame([data])
+
+# Get user input
+input_df = user_input_features()
+
+# One-hot encode categorical features to match training
+categorical_cols = ['Sex', 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']
+input_encoded = pd.get_dummies(input_df, columns=categorical_cols, drop_first=True)
+
+# Align input columns with model training columns
+model_features = model.feature_names_in_
+input_encoded = input_encoded.reindex(columns=model_features, fill_value=0)
+
+# Make prediction
+prediction = model.predict(input_encoded)
+prediction_proba = model.predict_proba(input_encoded)
+
+# Display results
+st.subheader("Prediction")
+heart_status = 'Heart Disease' if prediction[0] == 1 else 'No Heart Disease'
+st.write(heart_status)
+
+st.subheader("Prediction Probability")
+st.write(f"No Heart Disease: {prediction_proba[0][0]:.2f}")
+st.write(f"Heart Disease: {prediction_proba[0][1]:.2f}")
